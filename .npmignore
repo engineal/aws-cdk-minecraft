@@ -4,3 +4,15 @@
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Parcel default cache directory
+.parcel-cache
+
+.idea
+.github
+test
+
+.eslintrc.json
+.releaserc
+jest.config.js
+tsconfig.json
