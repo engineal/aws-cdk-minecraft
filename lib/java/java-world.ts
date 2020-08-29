@@ -1,9 +1,9 @@
 import {BaseWorld, BaseWorldProps, IWorld} from '../base-world';
 import {ContainerImage, LogDriver, Protocol, TaskDefinition} from '@aws-cdk/aws-ecs';
-import {IHostedZone, SrvRecord} from '@aws-cdk/aws-route53';
 import {Peer, Port} from '@aws-cdk/aws-ec2';
 import {Construct} from '@aws-cdk/core';
 import {JavaWorldType} from './java-world-type';
+import {SrvRecord} from '@aws-cdk/aws-route53';
 
 export interface RconProps {
 
@@ -40,11 +40,6 @@ export interface JavaWorldProps extends BaseWorldProps {
      * @default 25565
      */
     readonly port?: number;
-
-    /**
-     * The hosted zone to create the SRV DNS record in
-     */
-    readonly hostedZone?: IHostedZone;
 
     /**
      * Use a specific server version
@@ -244,12 +239,12 @@ export class JavaWorld extends BaseWorld implements IWorld {
 
     private readonly environmentVariables: { [key: string]: string };
 
-    constructor(scope: Construct, id: string, props?: JavaWorldProps) {
-        const minecraftPort = props?.port ?? DEFAULT_MINECRAFT_PORT;
+    constructor(scope: Construct, id: string, props: JavaWorldProps) {
+        const minecraftPort = props.port ?? DEFAULT_MINECRAFT_PORT;
         const environment = JavaWorld.createEnvironment(props);
 
         const addDefaultContainer = (task: TaskDefinition, logging?: LogDriver) => {
-            const registryName = `itzg/minecraft-server${props?.type?.type === 'FTBA' ? ':multiarch' : ''}`;
+            const registryName = `itzg/minecraft-server${props.type?.type === 'FTBA' ? ':multiarch' : ''}`;
             const minecraftContainer = task.addContainer('MinecraftContainer', {
                 environment,
                 image: ContainerImage.fromRegistry(registryName),
@@ -267,25 +262,23 @@ export class JavaWorld extends BaseWorld implements IWorld {
             });
         };
 
-        super(scope, id, addDefaultContainer, props);
+        super(scope, id, props, addDefaultContainer);
 
         this.environmentVariables = environment;
 
         this.service.connections.allowFrom(Peer.anyIpv4(), Port.tcp(minecraftPort), 'Minecraft server port');
         this.service.connections.allowFrom(Peer.anyIpv6(), Port.tcp(minecraftPort), 'Minecraft server port');
 
-        if (props?.hostedZone) {
-            new SrvRecord(this, 'ServiceRecord', {
-                recordName: `_minecraft._tcp.${props.hostName}.`,
-                values: [{
-                    hostName: `${props.hostName}.`,
-                    port: minecraftPort,
-                    priority: 1,
-                    weight: 1
-                }],
-                zone: props?.hostedZone
-            });
-        }
+        new SrvRecord(this, 'ServiceRecord', {
+            recordName: `_minecraft._tcp.${props.dns.hostName}.`,
+            values: [{
+                hostName: `${props.dns.hostName}.`,
+                port: minecraftPort,
+                priority: 1,
+                weight: 1
+            }],
+            zone: props.dns.hostedZone
+        });
     }
 
     enableRCON(props?: RconProps): void {
@@ -328,8 +321,8 @@ export class JavaWorld extends BaseWorld implements IWorld {
     }
 
     // eslint-disable-next-line max-lines-per-function,max-statements,complexity
-    private static createEnvironment(props?: JavaWorldProps) {
-        const memoryLimitMiB = props?.resources?.memoryLimitMiB ?? DEFAULT_MEMORY_LIMIT;
+    private static createEnvironment(props: JavaWorldProps) {
+        const memoryLimitMiB = props.resources?.memoryLimitMiB ?? DEFAULT_MEMORY_LIMIT;
         const environment: { [key: string]: string } = {
             ENABLE_RCON: String(false),
             // Set initial memory to 50% of memory limit
@@ -339,91 +332,91 @@ export class JavaWorld extends BaseWorld implements IWorld {
             USE_AIKAR_FLAGS: String(true)
         };
 
-        if (props?.port) {
+        if (props.port) {
             environment.SERVER_PORT = String(props.port);
         }
-        if (props?.version) {
+        if (props.version) {
             environment.VERSION = props.version;
         }
-        if (props?.eula) {
+        if (props.eula) {
             environment.EULA = String(props.eula);
         }
-        if (props?.difficulty) {
+        if (props.difficulty) {
             environment.DIFFICULTY = props.difficulty;
         }
-        if (props?.whitelist) {
+        if (props.whitelist) {
             environment.WHITELIST = props.whitelist.join(',');
         }
-        if (props?.ops) {
+        if (props.ops) {
             environment.OPS = props.ops.join(',');
         }
-        if (props?.maxPlayers) {
+        if (props.maxPlayers) {
             environment.MAX_PLAYERS = String(props.maxPlayers);
         }
-        if (props?.maxWorldSize) {
+        if (props.maxWorldSize) {
             environment.MAX_WORLD_SIZE = String(props.maxWorldSize);
         }
-        if (props?.allowNether !== undefined) {
+        if (props.allowNether !== undefined) {
             environment.ALLOW_NETHER = String(props.allowNether);
         }
-        if (props?.announcePlayerAchievements !== undefined) {
+        if (props.announcePlayerAchievements !== undefined) {
             environment.ANNOUNCE_PLAYER_ACHIEVEMENTS = String(props.announcePlayerAchievements);
         }
-        if (props?.enableCommandBlock !== undefined) {
+        if (props.enableCommandBlock !== undefined) {
             environment.ENABLE_COMMAND_BLOCK = String(props.enableCommandBlock);
         }
-        if (props?.forceGamemode) {
+        if (props.forceGamemode) {
             environment.FORCE_GAMEMODE = String(props.forceGamemode);
         }
-        if (props?.generateStructures !== undefined) {
+        if (props.generateStructures !== undefined) {
             environment.GENERATE_STRUCTURES = String(props.generateStructures);
         }
-        if (props?.hardcore) {
+        if (props.hardcore) {
             environment.HARDCORE = String(props.hardcore);
         }
-        if (props?.snooperEnabled !== undefined) {
+        if (props.snooperEnabled !== undefined) {
             environment.SNOOPER_ENABLED = String(props.snooperEnabled);
         }
-        if (props?.maxBuildHeight) {
+        if (props.maxBuildHeight) {
             environment.MAX_BUILD_HEIGHT = String(props.maxBuildHeight);
         }
-        if (props?.maxTickTime) {
+        if (props.maxTickTime) {
             environment.MAX_TICK_TIME = String(props.maxTickTime);
         }
-        if (props?.spawnAnimals !== undefined) {
+        if (props.spawnAnimals !== undefined) {
             environment.SPAWN_ANIMALS = String(props.spawnAnimals);
         }
-        if (props?.spawnMonsters !== undefined) {
+        if (props.spawnMonsters !== undefined) {
             environment.SPAWN_MONSTERS = String(props.spawnMonsters);
         }
-        if (props?.spawnNpcs !== undefined) {
+        if (props.spawnNpcs !== undefined) {
             environment.SPAWN_NPCS = String(props.spawnNpcs);
         }
-        if (props?.spawnProtection !== undefined) {
+        if (props.spawnProtection !== undefined) {
             environment.SPAWN_PROTECTION = String(props.spawnProtection);
         }
-        if (props?.viewDistance) {
+        if (props.viewDistance) {
             environment.VIEW_DISTANCE = String(props.viewDistance);
         }
-        if (props?.seed) {
+        if (props.seed) {
             environment.SEED = props.seed;
         }
-        if (props?.mode) {
+        if (props.mode) {
             environment.MODE = props.mode;
         }
-        if (props?.messageOfTheDay) {
+        if (props.messageOfTheDay) {
             environment.MOTD = props.messageOfTheDay;
         }
-        if (props?.pvp !== undefined) {
+        if (props.pvp !== undefined) {
             environment.PVP = String(props.pvp);
         }
-        if (props?.levelType) {
+        if (props.levelType) {
             environment.LEVEL_TYPE = props.levelType;
         }
-        if (props?.type?.type) {
+        if (props.type?.type) {
             environment.TYPE = props.type.type;
         }
-        if (props?.type?.environment) {
+        if (props.type?.environment) {
             for (const [key, value] of Object.entries(props.type.environment)) {
                 if (value) {
                     environment[key] = value;

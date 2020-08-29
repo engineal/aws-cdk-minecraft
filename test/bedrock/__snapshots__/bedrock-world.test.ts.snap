@@ -2,7 +2,81 @@
 
 exports[`Bedrock World defaults snapshot 1`] = `
 Object {
+  "Parameters": Any<Object>,
   "Resources": Object {
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": Object {
+      "DependsOn": Array [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      ],
+      "Properties": Object {
+        "Code": Any<Object>,
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs10.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": Array [
+          Object {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "TestBackupPlanD9853702": Object {
       "Properties": Object {
         "BackupPlan": Object {
@@ -683,6 +757,55 @@ Object {
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
+    "TestMetricPublisherFunctionSchedule637220EC": Object {
+      "Properties": Object {
+        "ScheduleExpression": "rate(1 minute)",
+        "State": "ENABLED",
+        "Targets": Array [
+          Object {
+            "Arn": Object {
+              "Fn::GetAtt": Array [
+                "Testmetricpublisherfunction65C3FB4C",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+            "InputTransformer": Object {
+              "InputPathsMap": Object {
+                "account": "$.account",
+                "detail-type": "$.detail-type",
+                "id": "$.id",
+                "region": "$.region",
+                "resources": "$.resources",
+                "source": "$.source",
+                "time": "$.time",
+                "version": "$.version",
+              },
+              "InputTemplate": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "{\\"account\\":<account>,\\"detail\\":{\\"clusterName\\":\\"",
+                    Object {
+                      "Ref": "TestCluster4BB28665",
+                    },
+                    "\\",\\"hostName\\":\\"test.example.com\\",\\"serviceName\\":\\"",
+                    Object {
+                      "Fn::GetAtt": Array [
+                        "TestService2D8F51A4",
+                        "Name",
+                      ],
+                    },
+                    "\\"},\\"detail-type\\":<detail-type>,\\"id\\":<id>,\\"region\\":<region>,\\"resources\\":<resources>,\\"source\\":<source>,\\"time\\":<time>,\\"version\\":<version>}",
+                  ],
+                ],
+              },
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -719,10 +842,6 @@ Object {
         "PlatformVersion": "LATEST",
         "PropagateTags": "SERVICE",
         "Tags": Array [
-          Object {
-            "Key": "hostname",
-            "Value": "undefined",
-          },
           Object {
             "Key": "minecraft:worldName",
             "Value": "Test",
@@ -817,10 +936,6 @@ Object {
           },
         ],
         "Tags": Array [
-          Object {
-            "Key": "hostname",
-            "Value": "undefined",
-          },
           Object {
             "Key": "minecraft:worldName",
             "Value": "Test",
@@ -1033,19 +1148,216 @@ Object {
       },
       "Type": "AWS::IAM::Role",
     },
+    "Testmetricpublisherfunction65C3FB4C": Object {
+      "DependsOn": Array [
+        "TestmetricpublisherfunctionServiceRoleDefaultPolicyC3F59BFD",
+        "TestmetricpublisherfunctionServiceRoleD8443199",
+      ],
+      "Properties": Object {
+        "Code": Any<Object>,
+        "Environment": Object {
+          "Variables": Object {
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+          },
+        },
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "TestmetricpublisherfunctionServiceRoleD8443199",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs12.x",
+        "Tags": Array [
+          Object {
+            "Key": "minecraft:worldName",
+            "Value": "Test",
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
+      "Properties": Object {
+        "LogGroupName": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "/aws/lambda/",
+              Object {
+                "Ref": "Testmetricpublisherfunction65C3FB4C",
+              },
+            ],
+          ],
+        },
+        "RetentionInDays": 1,
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "TestmetricpublisherfunctionServiceRoleD8443199": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "minecraft:worldName",
+            "Value": "Test",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TestmetricpublisherfunctionServiceRoleDefaultPolicyC3F59BFD": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:PutMetricData",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TestmetricpublisherfunctionServiceRoleDefaultPolicyC3F59BFD",
+        "Roles": Array [
+          Object {
+            "Ref": "TestmetricpublisherfunctionServiceRoleD8443199",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
   },
 }
 `;
 
 exports[`Bedrock World enable sftp 1`] = `
 Object {
-  "Parameters": Object {
-    "TestUsersParameterParameter6CC57436": Object {
-      "Default": "users",
-      "Type": "AWS::SSM::Parameter::Value<String>",
-    },
-  },
+  "Parameters": Any<Object>,
   "Resources": Object {
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": Object {
+      "DependsOn": Array [
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      ],
+      "Properties": Object {
+        "Code": Any<Object>,
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs10.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": Array [
+                "logs:PutRetentionPolicy",
+                "logs:DeleteRetentionPolicy",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+        "Roles": Array [
+          Object {
+            "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
     "TestBackupPlanD9853702": Object {
       "Properties": Object {
         "BackupPlan": Object {
@@ -1726,6 +2038,55 @@ Object {
       },
       "Type": "AWS::EC2::SecurityGroupIngress",
     },
+    "TestMetricPublisherFunctionSchedule637220EC": Object {
+      "Properties": Object {
+        "ScheduleExpression": "rate(1 minute)",
+        "State": "ENABLED",
+        "Targets": Array [
+          Object {
+            "Arn": Object {
+              "Fn::GetAtt": Array [
+                "Testmetricpublisherfunction65C3FB4C",
+                "Arn",
+              ],
+            },
+            "Id": "Target0",
+            "InputTransformer": Object {
+              "InputPathsMap": Object {
+                "account": "$.account",
+                "detail-type": "$.detail-type",
+                "id": "$.id",
+                "region": "$.region",
+                "resources": "$.resources",
+                "source": "$.source",
+                "time": "$.time",
+                "version": "$.version",
+              },
+              "InputTemplate": Object {
+                "Fn::Join": Array [
+                  "",
+                  Array [
+                    "{\\"account\\":<account>,\\"detail\\":{\\"clusterName\\":\\"",
+                    Object {
+                      "Ref": "TestCluster4BB28665",
+                    },
+                    "\\",\\"hostName\\":\\"test.example.com\\",\\"serviceName\\":\\"",
+                    Object {
+                      "Fn::GetAtt": Array [
+                        "TestService2D8F51A4",
+                        "Name",
+                      ],
+                    },
+                    "\\"},\\"detail-type\\":<detail-type>,\\"id\\":<id>,\\"region\\":<region>,\\"resources\\":<resources>,\\"source\\":<source>,\\"time\\":<time>,\\"version\\":<version>}",
+                  ],
+                ],
+              },
+            },
+          },
+        ],
+      },
+      "Type": "AWS::Events::Rule",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -1762,10 +2123,6 @@ Object {
         "PlatformVersion": "LATEST",
         "PropagateTags": "SERVICE",
         "Tags": Array [
-          Object {
-            "Key": "hostname",
-            "Value": "undefined",
-          },
           Object {
             "Key": "minecraft:worldName",
             "Value": "Test",
@@ -1874,10 +2231,6 @@ Object {
           },
         ],
         "Tags": Array [
-          Object {
-            "Key": "hostname",
-            "Value": "undefined",
-          },
           Object {
             "Key": "minecraft:worldName",
             "Value": "Test",
@@ -2191,6 +2544,135 @@ Object {
         ],
       },
       "Type": "AWS::IAM::Role",
+    },
+    "Testmetricpublisherfunction65C3FB4C": Object {
+      "DependsOn": Array [
+        "TestmetricpublisherfunctionServiceRoleDefaultPolicyC3F59BFD",
+        "TestmetricpublisherfunctionServiceRoleD8443199",
+      ],
+      "Properties": Object {
+        "Code": Any<Object>,
+        "Environment": Object {
+          "Variables": Object {
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+          },
+        },
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "TestmetricpublisherfunctionServiceRoleD8443199",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs12.x",
+        "Tags": Array [
+          Object {
+            "Key": "minecraft:worldName",
+            "Value": "Test",
+          },
+        ],
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
+      "Properties": Object {
+        "LogGroupName": Object {
+          "Fn::Join": Array [
+            "",
+            Array [
+              "/aws/lambda/",
+              Object {
+                "Ref": "Testmetricpublisherfunction65C3FB4C",
+              },
+            ],
+          ],
+        },
+        "RetentionInDays": 1,
+        "ServiceToken": Object {
+          "Fn::GetAtt": Array [
+            "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "Custom::LogRetention",
+    },
+    "TestmetricpublisherfunctionServiceRoleD8443199": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+        "Tags": Array [
+          Object {
+            "Key": "minecraft:worldName",
+            "Value": "Test",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TestmetricpublisherfunctionServiceRoleDefaultPolicyC3F59BFD": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:PutMetricData",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "TestmetricpublisherfunctionServiceRoleDefaultPolicyC3F59BFD",
+        "Roles": Array [
+          Object {
+            "Ref": "TestmetricpublisherfunctionServiceRoleD8443199",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
     },
   },
 }

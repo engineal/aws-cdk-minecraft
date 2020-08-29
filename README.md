@@ -23,7 +23,12 @@ This library supports both Java and Bedrock servers, using docker images from th
 This simple line will deploy a new vanilla Java Minecraft server with default settings, including automatic backups,
 cost savings, and more.
 ```typescript
-const world = new JavaWorld(this, props.name);
+const world = new JavaWorld(this, props.name, {
+    dns: {
+        hostName: 'test.example.com',
+        hostedZone
+    }
+});
 ```
 
 ### Features
@@ -39,7 +44,12 @@ the format of `username:password`. See the https://github.com/atmoz/sftp for mor
 ##### Example
 ```typescript
 const parameter = StringParameter.fromStringParameterName(world, 'UsersParameter', 'users');
-const world = new JavaWorld(this, props.name);
+const world = new JavaWorld(this, props.name, {
+    dns: {
+        hostName: 'test.example.com',
+        hostedZone
+    }
+});
 world.enableSftp(Secret.fromSsmParameter(parameter));
 ```
 

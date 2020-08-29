@@ -47,9 +47,9 @@ const DEFAULT_IPV6_PORT = 19133;
 
 export class BedrockWorld extends BaseWorld implements IWorld {
 
-    constructor(scope: Construct, id: string, props?: MinecraftBedrockWorldProps) {
-        const ipv4Port = props?.ipv4Port ?? DEFAULT_IPV4_PORT;
-        const ipv6Port = props?.ipv6Port ?? DEFAULT_IPV6_PORT;
+    constructor(scope: Construct, id: string, props: MinecraftBedrockWorldProps) {
+        const ipv4Port = props.ipv4Port ?? DEFAULT_IPV4_PORT;
+        const ipv6Port = props.ipv6Port ?? DEFAULT_IPV6_PORT;
         const environment = BedrockWorld.createEnvironment(props);
 
         const addDefaultContainer = (task: TaskDefinition, logging?: LogDriver) => {
@@ -76,19 +76,19 @@ export class BedrockWorld extends BaseWorld implements IWorld {
             });
         };
 
-        super(scope, id, addDefaultContainer, props);
+        super(scope, id, props, addDefaultContainer);
 
         this.service.connections.allowFrom(Peer.anyIpv4(), Port.udp(ipv4Port), 'Minecraft server port');
         this.service.connections.allowFrom(Peer.anyIpv6(), Port.udp(ipv6Port), 'Minecraft server port');
     }
 
-    private static createEnvironment(props?: MinecraftBedrockWorldProps) {
+    private static createEnvironment(props: MinecraftBedrockWorldProps) {
         const environment: { [key: string]: string } = {};
 
-        if (props?.version) {
+        if (props.version) {
             environment.VERSION = props.version;
         }
-        if (props?.eula) {
+        if (props.eula) {
             environment.EULA = String(props.eula);
         }
 

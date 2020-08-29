@@ -22,11 +22,17 @@ import {
     TaskDefinition
 } from '@aws-cdk/aws-ecs';
 import {Construct, Duration, IConstruct, Stack, Tags} from '@aws-cdk/core';
+import {EventField, Rule, RuleTargetInput, Schedule} from '@aws-cdk/aws-events';
 import {FileSystem, IFileSystem} from '@aws-cdk/aws-efs';
 import {ILogGroup, RetentionDays} from '@aws-cdk/aws-logs';
 import {Peer, Port} from '@aws-cdk/aws-ec2';
 import {ApplicationScalingAction} from '@aws-cdk/aws-cloudwatch-actions';
+import {IHostedZone} from '@aws-cdk/aws-route53';
+import {LambdaFunction} from '@aws-cdk/aws-events-targets';
+import {MetricPublisherEventDetail} from './base-world.metric-publisher-function';
+import {NodejsFunction} from '@aws-cdk/aws-lambda-nodejs';
 import {Role} from '@aws-cdk/aws-iam';
+import {Tracing} from '@aws-cdk/aws-lambda';
 
 export interface IWorld extends IConstruct {
 
@@ -39,6 +45,23 @@ export interface IWorld extends IConstruct {
      * The EFS file system this world's data is stored in
      */
     readonly fileSystem: IFileSystem;
+
+    /**
+     * @returns {IMetric} the given named metric for this world
+     * @param {string} metricName the given metric
+     * @param {MetricOptions} props to use for metric
+     */
+    metric(metricName: string, props?: MetricOptions): IMetric;
+
+    metricPing(props?: MetricOptions): IMetric;
+
+    metricPlayersOnline(props?: MetricOptions): IMetric;
+
+    metricPlayersMax(props?: MetricOptions): IMetric;
+
+    metricCpuUtilization(props?: MetricOptions): IMetric;
+
+    metricMemoryUtilization(props?: MetricOptions): IMetric;
 
 }
 
@@ -83,37 +106,20 @@ export interface BaseWorldProps {
      */
     readonly cluster?: ICluster;
 
-    readonly storage?: {
+    readonly dns: {
 
         /**
-         * The EFS file system to store this world's data in
-         *
-         * @default create a new file system
+         * The hosted zone to create DNS entries for this world in
          */
-        readonly fileSystem?: IFileSystem;
+        readonly hostedZone: IHostedZone;
 
         /**
-         * The directory within the Amazon EFS file system to mount as the root directory inside the host.
-         * Specifying / will have the same effect as omitting this parameter.
-         *
-         * @default The root of the Amazon EFS volume
+         * The host name of this world
          */
-        readonly rootDirectory?: string;
-
-        /**
-         * Enables automatic backups for this world using AWS Backup
-         *
-         * @default true
-         */
-        readonly enableBackup?: boolean
-
-        /**
-         * Configures a custom backup plan for this world
-         *
-         * @default Daily and monthly with 1 year retention
-         */
-        readonly backupPlan?: BackupPlan;
+        readonly hostName: string;
     }
+
+    readonly logging?: LoggingProps;
 
     readonly resources?: {
 
@@ -162,9 +168,44 @@ export interface BaseWorldProps {
         readonly autoscaleDelay?: Duration;
     };
 
-    readonly logging?: LoggingProps;
+    readonly storage?: {
 
-    readonly hostName?: string;
+        /**
+         * The EFS file system to store this world's data in
+         *
+         * @default create a new file system
+         */
+        readonly fileSystem?: IFileSystem;
+
+        /**
+         * The directory within the Amazon EFS file system to mount as the root directory inside the host.
+         * Specifying / will have the same effect as omitting this parameter.
+         *
+         * @default The root of the Amazon EFS volume
+         */
+        readonly rootDirectory?: string;
+
+        /**
+         * Enables automatic backups for this world using AWS Backup
+         *
+         * @default true
+         */
+        readonly enableBackup?: boolean
+
+        /**
+         * Configures a custom backup plan for this world
+         *
+         * @default Daily and monthly with 1 year retention
+         */
+        readonly backupPlan?: BackupPlan;
+    }
+
+    /**
+     * Enable AWS X-Ray Tracing for Lambda Functions
+     *
+     * @default Tracing.Disabled
+     */
+    readonly tracing?: Tracing;
 
 }
 
@@ -176,36 +217,36 @@ export abstract class BaseWorld extends Construct implements IWorld {
 
     protected readonly task: TaskDefinition;
 
-    private readonly id: string;
-
-    private readonly logging?: LoggingProps;
+    private readonly logging: LogDriver;
 
     // eslint-disable-next-line max-lines-per-function,max-statements,max-params
     protected constructor(
         scope: Construct,
         id: string,
-        addDefaultContainer: (task: TaskDefinition, logging?: LogDriver) => void,
-        props?: BaseWorldProps
+        props: BaseWorldProps,
+        addDefaultContainer: (task: TaskDefinition, logging?: LogDriver) => void
     ) {
         super(scope, id);
 
-        this.id = id;
-        this.logging = props?.logging;
+        this.logging = LogDriver.awsLogs({
+            streamPrefix: props.logging?.streamPrefix ?? id,
+            ...props.logging
+        });
 
         Tags.of(this).add('minecraft:worldName', id);
 
-        const cluster = props?.cluster ?? new Cluster(this, 'Cluster');
+        const cluster = props.cluster ?? new Cluster(this, 'Cluster');
 
-        this.fileSystem = props?.storage?.fileSystem ?? new FileSystem(this, 'FileSystem', {
+        this.fileSystem = props.storage?.fileSystem ?? new FileSystem(this, 'FileSystem', {
             encrypted: true,
             vpc: cluster.vpc
         });
 
         // Create a default backup plan or use the provided backup plan if backups are enabled
-        const enableBackup = props?.storage?.enableBackup === undefined ? true : props.storage.enableBackup;
+        const enableBackup = props.storage?.enableBackup === undefined ? true : props.storage.enableBackup;
 
         if (enableBackup) {
-            const backupPlan = props?.storage?.backupPlan ??
+            const backupPlan = props.storage?.backupPlan ??
                 BackupPlan.dailyMonthly1YearRetention(this, 'BackupPlan');
 
             backupPlan.addSelection(`${id}FileSystemSelection`, {
@@ -216,23 +257,20 @@ export abstract class BaseWorld extends Construct implements IWorld {
         }
 
         this.task = new FargateTaskDefinition(this, 'Task', {
-            cpu: props?.resources?.cpu,
-            memoryLimitMiB: props?.resources?.memoryLimitMiB,
+            cpu: props.resources?.cpu,
+            memoryLimitMiB: props.resources?.memoryLimitMiB,
             volumes: [{
                 efsVolumeConfiguration: {
                     fileSystemId: this.fileSystem.fileSystemId,
-                    rootDirectory: props?.storage?.rootDirectory,
+                    rootDirectory: props.storage?.rootDirectory,
                     transitEncryption: 'ENABLED'
                 },
                 name: 'efs'
             }]
         });
-        addDefaultContainer(this.task, LogDriver.awsLogs({
-            streamPrefix: this.logging?.streamPrefix ?? id,
-            ...this.logging
-        }));
+        addDefaultContainer(this.task, this.logging);
 
-        const enableAutoscaling = props?.resources?.enableAutoscaling === undefined
+        const enableAutoscaling = props.resources?.enableAutoscaling === undefined
             ? true
             : props.resources.enableAutoscaling;
 
@@ -248,50 +286,96 @@ export abstract class BaseWorld extends Construct implements IWorld {
             taskDefinition: this.task
         });
         this.fileSystem.connections.allowDefaultPortFrom(this.service);
-        Tags.of(this.service).add('hostname', `${props?.hostName}`);
 
         // Enable autoscaling
         if (enableAutoscaling) {
-            const serviceTarget = new ScalableTarget(this, 'ServiceTarget', {
-                maxCapacity: 1,
-                minCapacity: 0,
-                resourceId: `service/${this.service.cluster.clusterName}/${this.service.serviceName}`,
-                role: Role.fromRoleArn(this, 'ScalingRole', Stack.of(this).formatArn({
-                    region: '',
-                    resource: 'role/aws-service-role/ecs.application-autoscaling.amazonaws.com',
-                    resourceName: 'AWSServiceRoleForApplicationAutoScaling_ECSService',
-                    service: 'iam'
-                })),
-                scalableDimension: 'ecs:service:DesiredCount',
-                serviceNamespace: ServiceNamespace.ECS
-            });
-            const scaleDownAction = new StepScalingAction(this, 'ServiceScaleDownAction', {
-                adjustmentType: AdjustmentType.EXACT_CAPACITY,
-                metricAggregationType: MetricAggregationType.MAXIMUM,
-                scalingTarget: serviceTarget
-            });
-
-            scaleDownAction.addAdjustment({
-                adjustment: 0,
-                upperBound: 0
-            });
-
             // eslint-disable-next-line no-magic-numbers
-            const autoscaleDelay = (props?.resources?.autoscaleDelay ?? Duration.minutes(15)).toMinutes();
+            const autoscaleDelay = props.resources?.autoscaleDelay ?? Duration.minutes(15);
 
-            new Alarm(this, 'ServiceScaleDownAlarm', {
-                comparisonOperator: ComparisonOperator.LESS_THAN_THRESHOLD,
-                datapointsToAlarm: autoscaleDelay,
-                evaluationPeriods: autoscaleDelay,
-                metric: this.metricPlayersOnline({
-                    // eslint-disable-next-line no-magic-numbers
-                    period: Duration.minutes(1),
-                    statistic: 'Maximum'
-                }),
-                threshold: 1,
-                treatMissingData: TreatMissingData.NOT_BREACHING
-            }).addAlarmAction(new ApplicationScalingAction(scaleDownAction));
+            this.enableAutoscaling(autoscaleDelay);
         }
+
+        this.createMetricPublisher(props.dns.hostName);
+    }
+
+    private enableAutoscaling(autoscaleDelay: Duration) {
+        const serviceTarget = new ScalableTarget(this, 'ServiceTarget', {
+            maxCapacity: 1,
+            minCapacity: 0,
+            resourceId: `service/${this.service.cluster.clusterName}/${this.service.serviceName}`,
+            role: Role.fromRoleArn(this, 'ScalingRole', Stack.of(this).formatArn({
+                region: '',
+                resource: 'role/aws-service-role/ecs.application-autoscaling.amazonaws.com',
+                resourceName: 'AWSServiceRoleForApplicationAutoScaling_ECSService',
+                service: 'iam'
+            })),
+            scalableDimension: 'ecs:service:DesiredCount',
+            serviceNamespace: ServiceNamespace.ECS
+        });
+        const scaleDownAction = new StepScalingAction(this, 'ServiceScaleDownAction', {
+            adjustmentType: AdjustmentType.EXACT_CAPACITY,
+            metricAggregationType: MetricAggregationType.MAXIMUM,
+            scalingTarget: serviceTarget
+        });
+
+        scaleDownAction.addAdjustment({
+            adjustment: 0,
+            upperBound: 0
+        });
+
+        // Assuming metric publish rate of 1 minute
+        const datapointsToAlarm = autoscaleDelay.toMinutes();
+        const evaluationPeriods = datapointsToAlarm;
+
+        new Alarm(this, 'ServiceScaleDownAlarm', {
+            comparisonOperator: ComparisonOperator.LESS_THAN_THRESHOLD,
+            datapointsToAlarm,
+            evaluationPeriods,
+            metric: this.metricPlayersOnline({
+                // eslint-disable-next-line no-magic-numbers
+                period: Duration.minutes(1),
+                statistic: 'Maximum'
+            }),
+            threshold: 1,
+            treatMissingData: TreatMissingData.NOT_BREACHING
+        }).addAlarmAction(new ApplicationScalingAction(scaleDownAction));
+    }
+
+    private createMetricPublisher(hostName: string, tracing?: Tracing) {
+        // eslint-disable-next-line no-warning-comments
+        // TODO: make singleton function
+        const metricPublisherFunction = new NodejsFunction(this, 'metric-publisher-function', {
+            logRetention: RetentionDays.ONE_DAY,
+            minify: true,
+            tracing
+        });
+
+        Metric.grantPutMetricData(metricPublisherFunction);
+
+        const metricPublisherFunctionSchedule = new Rule(this, 'MetricPublisherFunctionSchedule', {
+            // eslint-disable-next-line no-magic-numbers
+            schedule: Schedule.rate(Duration.minutes(1))
+        });
+
+        const eventDetail: MetricPublisherEventDetail = {
+            clusterName: this.service.cluster.clusterName,
+            hostName,
+            serviceName: this.service.serviceName
+        };
+
+        metricPublisherFunctionSchedule.addTarget(new LambdaFunction(metricPublisherFunction, {
+            event: RuleTargetInput.fromObject({
+                'account': EventField.account,
+                'detail': eventDetail,
+                'detail-type': EventField.detailType,
+                'id': EventField.eventId,
+                'region': EventField.region,
+                'resources': EventField.fromPath('$.resources'),
+                'source': EventField.source,
+                'time': EventField.time,
+                'version': EventField.fromPath('$.version')
+            })
+        }));
     }
 
     /**
@@ -304,10 +388,7 @@ export abstract class BaseWorld extends Construct implements IWorld {
         const sftpContainer = this.task.addContainer('SftpContainer', {
             essential: false,
             image: ContainerImage.fromRegistry('atmoz/sftp'),
-            logging: LogDriver.awsLogs({
-                streamPrefix: this.logging?.streamPrefix ?? this.id,
-                ...this.logging
-            }),
+            logging: this.logging,
             secrets: {
                 SFTP_USERS: users
             }
@@ -326,11 +407,6 @@ export abstract class BaseWorld extends Construct implements IWorld {
         this.service.connections.allowFrom(Peer.anyIpv6(), Port.tcp(22), 'SFTP port');
     }
 
-    /**
-     * @returns {IMetric} the given named metric for this world
-     * @param {string} metricName the given metric
-     * @param {MetricOptions} props to use for metric
-     */
     metric(metricName: string, props?: MetricOptions): IMetric {
         return new Metric({
             dimensions: {

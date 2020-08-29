@@ -31,6 +31,7 @@
     "@commitlint/config-conventional": "^9.1.2",
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/git": "^9.0.0",
+    "@types/aws-lambda": "^8.10.61",
     "@types/jest": "^26.0.4",
     "@types/node": "^14.6.0",
     "@typescript-eslint/eslint-plugin": "^3.10.0",
@@ -50,7 +51,11 @@
     "@aws-cdk/aws-ec2": "^1.60.0",
     "@aws-cdk/aws-ecs": "^1.60.0",
     "@aws-cdk/aws-efs": "^1.60.0",
+    "@aws-cdk/aws-events": "^1.60.0",
+    "@aws-cdk/aws-events-targets": "^1.60.0",
     "@aws-cdk/aws-iam": "^1.60.0",
+    "@aws-cdk/aws-lambda": "^1.60.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.60.0",
     "@aws-cdk/aws-logs": "^1.60.0",
     "@aws-cdk/aws-route53": "^1.60.0",
     "@aws-cdk/core": "1.60.0"
@@ -63,10 +68,17 @@
     "@aws-cdk/aws-ec2": "^1.60.0",
     "@aws-cdk/aws-ecs": "^1.60.0",
     "@aws-cdk/aws-efs": "^1.60.0",
+    "@aws-cdk/aws-events": "^1.60.0",
+    "@aws-cdk/aws-events-targets": "^1.60.0",
     "@aws-cdk/aws-iam": "^1.60.0",
+    "@aws-cdk/aws-lambda": "^1.60.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.60.0",
     "@aws-cdk/aws-logs": "^1.60.0",
     "@aws-cdk/aws-route53": "^1.60.0",
-    "@aws-cdk/core": "1.60.0"
+    "@aws-cdk/core": "1.60.0",
+    "aws-sdk": "^2.739.0",
+    "aws-xray-sdk": "^3.1.0",
+    "mc-server-status": "^1.2.0"
   },
   "commitlint": {
     "extends": [
