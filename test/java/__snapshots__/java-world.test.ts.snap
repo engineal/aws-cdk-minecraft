@@ -806,6 +806,25 @@ Object {
       },
       "Type": "AWS::Events::Rule",
     },
+    "TestMetricPublisherFunctionScheduleAllowEventRuleTestMetricPublisherFunctionSchedule3689B57CDE9CA1BE": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -1201,25 +1220,6 @@ Object {
         ],
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
-      "Properties": Object {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": Object {
-          "Fn::GetAtt": Array [
-            "Testmetricpublisherfunction65C3FB4C",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": Object {
-          "Fn::GetAtt": Array [
-            "TestMetricPublisherFunctionSchedule637220EC",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
     },
     "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
       "Properties": Object {
@@ -2112,6 +2112,25 @@ Object {
       },
       "Type": "AWS::Events::Rule",
     },
+    "TestMetricPublisherFunctionScheduleAllowEventRuleTestMetricPublisherFunctionSchedule3689B57CDE9CA1BE": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -2529,25 +2548,6 @@ Object {
         ],
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
-      "Properties": Object {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": Object {
-          "Fn::GetAtt": Array [
-            "Testmetricpublisherfunction65C3FB4C",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": Object {
-          "Fn::GetAtt": Array [
-            "TestMetricPublisherFunctionSchedule637220EC",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
     },
     "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
       "Properties": Object {
@@ -3440,6 +3440,25 @@ Object {
       },
       "Type": "AWS::Events::Rule",
     },
+    "TestMetricPublisherFunctionScheduleAllowEventRuleTestMetricPublisherFunctionSchedule3689B57CDE9CA1BE": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -3853,25 +3872,6 @@ Object {
         ],
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
-      "Properties": Object {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": Object {
-          "Fn::GetAtt": Array [
-            "Testmetricpublisherfunction65C3FB4C",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": Object {
-          "Fn::GetAtt": Array [
-            "TestMetricPublisherFunctionSchedule637220EC",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
     },
     "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
       "Properties": Object {
@@ -4764,6 +4764,25 @@ Object {
       },
       "Type": "AWS::Events::Rule",
     },
+    "TestMetricPublisherFunctionScheduleAllowEventRuleTestMetricPublisherFunctionSchedule3689B57CDE9CA1BE": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -5185,25 +5204,6 @@ Object {
         ],
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
-      "Properties": Object {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": Object {
-          "Fn::GetAtt": Array [
-            "Testmetricpublisherfunction65C3FB4C",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": Object {
-          "Fn::GetAtt": Array [
-            "TestMetricPublisherFunctionSchedule637220EC",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
     },
     "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
       "Properties": Object {
@@ -6096,6 +6096,25 @@ Object {
       },
       "Type": "AWS::Events::Rule",
     },
+    "TestMetricPublisherFunctionScheduleAllowEventRuleTestMetricPublisherFunctionSchedule3689B57CDE9CA1BE": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -6499,25 +6518,6 @@ Object {
         ],
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
-      "Properties": Object {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": Object {
-          "Fn::GetAtt": Array [
-            "Testmetricpublisherfunction65C3FB4C",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": Object {
-          "Fn::GetAtt": Array [
-            "TestMetricPublisherFunctionSchedule637220EC",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
     },
     "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
       "Properties": Object {
@@ -7410,6 +7410,25 @@ Object {
       },
       "Type": "AWS::Events::Rule",
     },
+    "TestMetricPublisherFunctionScheduleAllowEventRuleTestMetricPublisherFunctionSchedule3689B57CDE9CA1BE": Object {
+      "Properties": Object {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": Object {
+          "Fn::GetAtt": Array [
+            "Testmetricpublisherfunction65C3FB4C",
+            "Arn",
+          ],
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": Object {
+          "Fn::GetAtt": Array [
+            "TestMetricPublisherFunctionSchedule637220EC",
+            "Arn",
+          ],
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "TestService2D8F51A4": Object {
       "Properties": Object {
         "Cluster": Object {
@@ -7921,25 +7940,6 @@ Object {
         ],
       },
       "Type": "AWS::Lambda::Function",
-    },
-    "TestmetricpublisherfunctionAllowEventRuleTestMetricPublisherFunctionSchedule3689B57C9BAD9C4D": Object {
-      "Properties": Object {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": Object {
-          "Fn::GetAtt": Array [
-            "Testmetricpublisherfunction65C3FB4C",
-            "Arn",
-          ],
-        },
-        "Principal": "events.amazonaws.com",
-        "SourceArn": Object {
-          "Fn::GetAtt": Array [
-            "TestMetricPublisherFunctionSchedule637220EC",
-            "Arn",
-          ],
-        },
-      },
-      "Type": "AWS::Lambda::Permission",
     },
     "TestmetricpublisherfunctionLogRetentionD68A25EE": Object {
       "Properties": Object {

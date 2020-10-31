@@ -21,8 +21,7 @@ const getStatus = async (hostName: string): Promise<minecraft.Status | undefined
     try {
         console.log(`Getting status from host: ${hostName}`);
 
-        return await minecraft.getStatus({
-            host: hostName,
+        return await minecraft.getStatus(hostName, null, {
             timeout: 1000
         });
     } catch (error) {

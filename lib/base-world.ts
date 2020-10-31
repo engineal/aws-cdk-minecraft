@@ -65,38 +65,6 @@ export interface IWorld extends IConstruct {
 
 }
 
-export interface LoggingProps {
-
-    /**
-     * Prefix for the log streams
-     *
-     * The awslogs-stream-prefix option allows you to associate a log stream
-     * with the specified prefix, the container name, and the ID of the Amazon
-     * ECS task to which the container belongs. If you specify a prefix with
-     * this option, then the log stream takes the following format:
-     *
-     *     prefix-name/container-name/ecs-task-id
-     *
-     * @default the world id
-     */
-    readonly streamPrefix?: string;
-
-    /**
-     * The log group to log to
-     *
-     * @default - A log group is automatically created.
-     */
-    readonly logGroup?: ILogGroup;
-
-    /**
-     * The number of days log events are kept in CloudWatch Logs when the log
-     * group is automatically created by this construct.
-     *
-     * @default - Logs never expire.
-     */
-    readonly logRetention?: RetentionDays;
-}
-
 export interface BaseWorldProps {
 
     /**
@@ -119,7 +87,37 @@ export interface BaseWorldProps {
         readonly hostName: string;
     }
 
-    readonly logging?: LoggingProps;
+    readonly logging?: {
+
+        /**
+         * Prefix for the log streams
+         *
+         * The awslogs-stream-prefix option allows you to associate a log stream
+         * with the specified prefix, the container name, and the ID of the Amazon
+         * ECS task to which the container belongs. If you specify a prefix with
+         * this option, then the log stream takes the following format:
+         *
+         *     prefix-name/container-name/ecs-task-id
+         *
+         * @default the world id
+         */
+        readonly streamPrefix?: string;
+
+        /**
+         * The log group to log to
+         *
+         * @default - A log group is automatically created.
+         */
+        readonly logGroup?: ILogGroup;
+
+        /**
+         * The number of days log events are kept in CloudWatch Logs when the log
+         * group is automatically created by this construct.
+         *
+         * @default - Logs never expire.
+         */
+        readonly logRetention?: RetentionDays;
+    }
 
     readonly resources?: {
 
