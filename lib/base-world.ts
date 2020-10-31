@@ -26,12 +26,12 @@ import {EventField, Rule, RuleTargetInput, Schedule} from '@aws-cdk/aws-events';
 import {FileSystem, IFileSystem} from '@aws-cdk/aws-efs';
 import {ILogGroup, RetentionDays} from '@aws-cdk/aws-logs';
 import {Peer, Port} from '@aws-cdk/aws-ec2';
+import {PolicyStatement, Role} from '@aws-cdk/aws-iam';
 import {ApplicationScalingAction} from '@aws-cdk/aws-cloudwatch-actions';
 import {IHostedZone} from '@aws-cdk/aws-route53';
 import {LambdaFunction} from '@aws-cdk/aws-events-targets';
 import {MetricPublisherEventDetail} from './base-world.metric-publisher-function';
 import {NodejsFunction} from '@aws-cdk/aws-lambda-nodejs';
-import {Role} from '@aws-cdk/aws-iam';
 import {Tracing} from '@aws-cdk/aws-lambda';
 
 export interface IWorld extends IConstruct {
@@ -295,7 +295,8 @@ export abstract class BaseWorld extends Construct implements IWorld {
             this.enableAutoscaling(autoscaleDelay);
         }
 
-        this.createMetricPublisher(props.dns.hostName);
+        this.createRoute53Updater(props.dns.hostedZone, props.tracing);
+        this.createMetricPublisher(props.dns.hostName, props.tracing);
     }
 
     private enableAutoscaling(autoscaleDelay: Duration) {
@@ -341,9 +342,69 @@ export abstract class BaseWorld extends Construct implements IWorld {
         }).addAlarmAction(new ApplicationScalingAction(scaleDownAction));
     }
 
+    /**
+     * Create the Route 53 updater function
+     *
+     * TODO: replace with service discovery when it supports public IP addresses
+     * TODO: can be made a singleton function
+     *
+     * @param {IHostedZone} hostedZone the hosted zone to create DNS records in
+     * @param {Tracing} tracing Enable AWS X-Ray Tracing for Lambda Functions
+     * @returns {void}
+     * @private
+     */
+    private createRoute53Updater(hostedZone: IHostedZone, tracing?: Tracing) {
+        const route53UpdaterFunction = new NodejsFunction(this, 'route53-updater-function', {
+            logRetention: RetentionDays.ONE_YEAR,
+            minify: true,
+            tracing
+        });
+
+        route53UpdaterFunction.addToRolePolicy(new PolicyStatement({
+            actions: ['ec2:DescribeNetworkInterfaces'],
+            resources: ['*']
+        }));
+        route53UpdaterFunction.addToRolePolicy(new PolicyStatement({
+            actions: ['route53:ChangeResourceRecordSets'],
+            resources: [Stack.of(this).formatArn({
+                account: '',
+                region: '',
+                resource: 'hostedzone',
+                resourceName: hostedZone.hostedZoneId,
+                service: 'route53'
+            })]
+        }));
+
+        const route53UpdaterFunctionRule = new Rule(this, 'Route53UpdaterFunctionRule', {
+            eventPattern: {
+                detail: {
+                    clusterArn: [this.service.cluster.clusterArn],
+                    containers: {
+                        name: ['MinecraftContainer']
+                    },
+                    desiredStatus: ['RUNNING'],
+                    lastStatus: ['RUNNING'],
+                    taskDefinitionArn: [this.task.taskDefinitionArn]
+                },
+                detailType: ['ECS Task State Change'],
+                source: ['aws.ecs']
+            }
+        });
+
+        route53UpdaterFunctionRule.addTarget(new LambdaFunction(route53UpdaterFunction));
+    }
+
+    /**
+     * Create the metric publisher function
+     *
+     * TODO: can be made a singleton function
+     *
+     * @param {string} hostName the hostname of the world to publish metrics for
+     * @param {Tracing} tracing Enable AWS X-Ray Tracing for Lambda Functions
+     * @returns {void}
+     * @private
+     */
     private createMetricPublisher(hostName: string, tracing?: Tracing) {
-        // eslint-disable-next-line no-warning-comments
-        // TODO: make singleton function
         const metricPublisherFunction = new NodejsFunction(this, 'metric-publisher-function', {
             logRetention: RetentionDays.ONE_DAY,
             minify: true,
