@@ -52,6 +52,6 @@ export const lambdaHandler: ECSTaskStateChangeHandler = async event => {
                 }
             }]
         },
-        HostedZoneId: hostedZoneId
+        HostedZoneId: 'hostedZoneId'
     }).promise();
 };

@@ -293,7 +293,7 @@ export abstract class BaseWorld extends Construct implements IWorld {
             this.enableAutoscaling(autoscaleDelay);
         }
 
-        this.createRoute53Updater(props.dns.hostedZone, props.tracing);
+        //this.createRoute53Updater(props.dns.hostedZone, props.tracing);
         this.createMetricPublisher(props.dns.hostName, props.tracing);
     }
 
